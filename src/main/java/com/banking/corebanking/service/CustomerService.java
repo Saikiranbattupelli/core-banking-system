@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import com.banking.corebanking.entity.Customer;
 import com.banking.corebanking.repository.CustomerRepository;
 
+import com.banking.corebanking.exception.ResourceNotFoundException;
+
 @Service
 public class CustomerService {
 
@@ -31,7 +33,7 @@ public class CustomerService {
     public Customer getCustomerById(Long id) {
         return customerRepository.findById(id)
                 .orElseThrow(() ->
-                    new RuntimeException("Customer not found with ID: " + id));
+                    new ResourceNotFoundException("Customer not found with ID: " + id));
     }
 
     // Update customer
