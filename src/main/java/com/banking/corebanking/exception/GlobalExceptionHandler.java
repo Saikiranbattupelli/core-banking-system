@@ -64,4 +64,19 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+    // 4. Handle invalid Transactions
+    @ExceptionHandler(InvalidTransactionException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidTransaction(
+            InvalidTransactionException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", 400);
+        body.put("error", "Bad Request");
+        body.put("message", ex.getMessage());
+
+        return ResponseEntity.badRequest().body(body);
+    }
+    
 }
