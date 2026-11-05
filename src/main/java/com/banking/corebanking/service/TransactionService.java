@@ -83,6 +83,67 @@ public class TransactionService {
                 savedTransaction.getCreatedAt()
         );
     }
+    
+    @Transactional
+    public TransactionResponse withdraw(TransactionRequest request) {
+
+        // 1. Lock and retrieve the account
+        Account account = accountRepository
+                .findByAccountNumberForUpdate(request.getAccountNumber())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Account not found"));
+
+        // 2. Check account status
+        if (!"ACTIVE".equalsIgnoreCase(account.getStatus())) {
+            throw new InvalidTransactionException(
+                    "Account is not active");
+        }
+
+        // 3. Validate withdrawal amount
+        if (request.getAmount() == null
+                || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+
+            throw new InvalidTransactionException(
+                    "Withdrawal amount must be greater than zero");
+        }
+
+        // 4. Check sufficient balance
+        if (account.getBalance().compareTo(request.getAmount()) < 0) {
+            throw new InvalidTransactionException(
+                    "Insufficient account balance");
+        }
+
+        // 5. Deduct amount from account balance
+        BigDecimal newBalance = account.getBalance()
+                .subtract(request.getAmount());
+
+        account.setBalance(newBalance);
+
+        accountRepository.save(account);
+
+        // 6. Create transaction record
+        BankTransaction transaction = new BankTransaction();
+
+        transaction.setReferenceNumber(generateReferenceNumber());
+        transaction.setTransactionType("WITHDRAWAL");
+        transaction.setAmount(request.getAmount());
+        transaction.setStatus("SUCCESS");
+        transaction.setDescription(request.getDescription());
+        transaction.setFromAccount(account);
+
+        BankTransaction savedTransaction =
+                transactionRepository.save(transaction);
+
+        // 7. Return response
+        return new TransactionResponse(
+                savedTransaction.getReferenceNumber(),
+                savedTransaction.getTransactionType(),
+                savedTransaction.getAmount(),
+                savedTransaction.getStatus(),
+                savedTransaction.getDescription(),
+                savedTransaction.getCreatedAt()
+        );
+    }
 
     private String generateReferenceNumber() {
 
