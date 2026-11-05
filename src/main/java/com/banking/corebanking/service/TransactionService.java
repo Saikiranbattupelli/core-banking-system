@@ -1,5 +1,7 @@
 package com.banking.corebanking.service;
 
+import java.util.List;
+
 import com.banking.corebanking.dto.TransferRequest;
 
 import java.math.BigDecimal;
@@ -265,6 +267,56 @@ public TransactionResponse transfer(TransferRequest request) {
                 .replace("-", "")
                 .substring(0, 12)
                 .toUpperCase();
+    }
+    
+    public List<TransactionResponse> getAllTransactions() {
+
+        return transactionRepository
+                .findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+    
+    public TransactionResponse getTransactionByReference(String referenceNumber) {
+
+        BankTransaction transaction = transactionRepository
+                .findByReferenceNumber(referenceNumber)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Transaction not found with reference: " + referenceNumber
+                ));
+
+        return convertToResponse(transaction);
+    }
+    
+    public List<TransactionResponse> getAccountTransactionHistory(
+            String accountNumber) {
+
+        if (!accountRepository.existsByAccountNumber(accountNumber)) {
+            throw new ResourceNotFoundException(
+                    "Account not found: " + accountNumber
+            );
+        }
+
+        return transactionRepository
+                .findByFromAccount_AccountNumberOrToAccount_AccountNumberOrderByCreatedAtDesc(
+                        accountNumber, accountNumber
+                )
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+    
+    private TransactionResponse convertToResponse(BankTransaction transaction) {
+
+        return new TransactionResponse(
+                transaction.getReferenceNumber(),
+                transaction.getTransactionType(),
+                transaction.getAmount(),
+                transaction.getStatus(),
+                transaction.getDescription(),
+                transaction.getCreatedAt()
+        );
     }
     
 }

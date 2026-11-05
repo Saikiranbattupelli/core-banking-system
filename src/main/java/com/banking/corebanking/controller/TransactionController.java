@@ -1,5 +1,9 @@
 package com.banking.corebanking.controller;
 
+import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
 import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
@@ -59,5 +63,31 @@ public class TransactionController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<TransactionResponse>> getAllTransactions() {
+
+        return ResponseEntity.ok(
+                transactionService.getAllTransactions()
+        );
+    }
+    
+    @GetMapping("/{referenceNumber}")
+    public ResponseEntity<TransactionResponse> getTransactionByReference(
+            @PathVariable String referenceNumber) {
+
+        return ResponseEntity.ok(
+                transactionService.getTransactionByReference(referenceNumber)
+        );
+    }
+    
+    @GetMapping("/account/{accountNumber}")
+    public ResponseEntity<List<TransactionResponse>> getAccountTransactionHistory(
+            @PathVariable String accountNumber) {
+
+        return ResponseEntity.ok(
+                transactionService.getAccountTransactionHistory(accountNumber)
+        );
     }
 }
